@@ -105,6 +105,12 @@
     border-radius: 10px;
     cursor: pointer;
   }
+  .tip {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -115,10 +121,11 @@
   <div class="form-group">
     <label>選擇等級</label>
     <div class="level-btns">
-      <button type="button" onclick="setLevel('1200', this)">1200</button>
-      <button type="button" onclick="setLevel('3400', this)">3400</button>
-      <button type="button" onclick="setLevel('6600', this)">6600</button>
+      <button type="button" onclick="setLevel('1200', this, 80)">1200</button>
+      <button type="button" onclick="setLevel('3400', this, 110)">3400</button>
+      <button type="button" onclick="setLevel('6600', this, 180)">6600</button>
     </div>
+    <div class="tip" id="time-tip">請選擇等級以自動計算截買時間</div>
   </div>
 
   <div class="form-group">
@@ -157,11 +164,18 @@
 <script>
   let selectedLevel = "";
   let activeInput = null;
+  let timeOffset = 0; // 儲存不同等級需要加的分鐘數
 
-  function setLevel(level, btnElement) {
+  function setLevel(level, btnElement, offset) {
     selectedLevel = level;
+    timeOffset = offset;
     document.querySelectorAll('.level-btns button').forEach(btn => btn.classList.remove('active'));
     btnElement.classList.add('active');
+    
+    // 顯示提示告知使用者加了多久
+    const h = Math.floor(offset / 60);
+    const m = offset % 60;
+    document.getElementById('time-tip').textContent = `已選擇 ${level} (截買時間將自動 +${h > 0 ? h + '小時' : ''}${m > 0 ? m + '分' : ''})`;
   }
 
   function setActive(id) {
@@ -199,7 +213,13 @@
       let hours = parseInt(parts[0], 10);
       let mins = parseInt(parts[1], 10);
       
-      let totalMins = hours * 60 + mins + 110; 
+      if (isNaN(hours) || isNaN(mins)) {
+        alert('時間格式不正確，請輸入數字與冒號。');
+        return;
+      }
+
+      // 根據選擇的等級加時間
+      let totalMins = hours * 60 + mins + timeOffset; 
       let newHours = Math.floor(totalMins / 60) % 24;
       let newMins = totalMins % 60;
       
@@ -209,7 +229,6 @@
       return;
     }
 
-    // 這裡輸出的愛心標誌已移除括號
     const resultStr = `♡賽事更新♡\n${selectedLevel}\n目前人數: ${people}\n開始時間: ${startTime}\n截買時間: ${cutOffTime}`;
     
     document.getElementById('output').textContent = resultStr;
